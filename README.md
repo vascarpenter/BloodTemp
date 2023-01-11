@@ -17,7 +17,7 @@ https://github.com/vascarpenter/BloodTemp
 
 ### このandroidアプリをコンパイルする前に
 
-- build.gradle :app から ３つの文字列を参照しているので
+- build.gradle :app から 4つの文字列を参照しているので
 - `~/.gradle/gradle.properties` に追加しておく
 
 ```
@@ -29,3 +29,4 @@ bloodapikey=ACCESSKEY
 ```
 
 - kotlin ソース内で参照してます
+- letsencryptx3(Let's Encrypt Authority X3)がRetireしたため Let’s Encrypt R3に変更した
