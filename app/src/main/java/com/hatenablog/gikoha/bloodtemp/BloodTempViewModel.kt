@@ -1,6 +1,5 @@
 package com.hatenablog.gikoha.bloodtemp
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,9 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -19,18 +16,29 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
-class BloodTempViewModel @Inject constructor() : ViewModel()
-{
+class BloodTempViewModel @Inject constructor() : ViewModel() {
     private val _buttontitle = MutableLiveData("SUBMIT")
     val buttontitle: LiveData<String> = _buttontitle
+    val errorMessage = MutableStateFlow("")
+
+    private val _showDialog = MutableStateFlow(false)
+    val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
+
+    fun openAlert() {
+        _showDialog.value = true
+    }
+
+    fun closeAlert() {
+        _showDialog.value = false
+        // Continue with executing the confirmed action
+    }
 
     private val _items = MutableStateFlow<List<BloodTemp>?>(null)
     val state = _items.map {
         BloodTempViewState(it)
     }
 
-    fun changeTitle(title: String)
-    {
+    fun changeTitle(title: String) {
         _buttontitle.value = title
     }
 
@@ -55,14 +63,15 @@ class BloodTempViewModel @Inject constructor() : ViewModel()
                     _items.update { data.toList() }
                     callback()
                 } else {
-                    Log.e("Error", response.errorBody().toString())
+                    errorMessage.value = response.errorBody().toString()
+                    openAlert()
                 }
             } catch (e: Exception) {
-                Log.e("Error", "connect error " + e.message)
+                errorMessage.value = "connect error " + e.message ?: ""
+                openAlert()
             }
 
         }
-
     }
 
     fun postData(temp: String, memo: String, callback: () -> Unit)
@@ -73,17 +82,18 @@ class BloodTempViewModel @Inject constructor() : ViewModel()
 
         viewModelScope.launch {
             try {
-
                 // repo access is suspended function, so run in CoroutineScope
                 val response = postapi.postItem(d)
                 if (response.isSuccessful) {
                     // success
                     callback()
                 } else {
-                    Log.e("Error", response.errorBody().toString())
+                    errorMessage.value = response.errorBody().toString()
+                    openAlert()
                 }
             } catch (e: Exception) {
-                Log.e("Error", "connect error " + e.message)
+                errorMessage.value = "connect error " + e.message ?: ""
+                openAlert()
             }
 
         }
